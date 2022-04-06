@@ -1,0 +1,41 @@
+#!../../bin/windows-x64/huber
+
+#errlogInit(5000)
+< envPaths
+
+## Register all support components
+dbLoadDatabase "../../dbd/huber.dbd"
+huber_registerRecordDeviceDriver pdbbase
+
+## Configure IP Port
+drvAsynIPPortConfigure("Huber1", "192.168.21.126:1234",0,0,0)
+
+## Configure Controller
+SMC9300CreateController("SMC1", "Huber1", 5, 100, 1000)
+
+asynOctetSetInputEos("Huber1",0,"\r\n")
+asynOctetSetOutputEos("Huber1",0,"\r")
+
+asynSetTraceIOMask("Huber1", 0, 2)
+asynSetTraceMask("Huber1", 0, 9)
+#asynSetTraceIOMask("SMC1", 0, 2)
+#asynSetTraceMask("SMC1", 0, 255)
+asynSetTraceFile("Huber1", 0, "huber_comms_on_win10.txt")
+
+### Motors
+dbLoadTemplate "motor.substitutions.smc9300"
+
+iocInit
+
+## Start any sequence programs
+#seq sncxxx,"user=HEPSB6"
+
+# This IOC does not use save/restore, so set values of some PVs
+dbpf("Huber:m1.RTRY", "0")
+dbpf("Huber:m1.TWV", "0.1")
+dbpf("Huber:m2.RTRY", "0")
+dbpf("Huber:m2.TWV", "0.1")
+dbpf("Huber:m3.RTRY", "0")
+dbpf("Huber:m3.TWV", "0.1")
+dbpf("Huber:m4.RTRY", "0")
+dbpf("Huber:m4.TWV", "0.1")

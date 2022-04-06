@@ -1,0 +1,9 @@
+file "$(MOTOR)/db/asyn_motor.db"
+{
+pattern
+{P,    N,   M,         DTYP,     PORT, ADDR,  DESC,     EGU,   DIR,   VELO,  VBAS, ACCL, BDST, BVEL, BACC,    MRES, PREC,   DHLM, DLLM, INIT}
+{Huber:, 1, "m$(N)", "asynMotor",  SMC1,  1, "Z-table",   mm,   Pos,    200,   10,  20,    0,    1,   .2,    0.0001,    4,   10,    -10,    ""}
+{Huber:, 2, "m$(N)", "asynMotor",  SMC1,  2, "Y-table",   mm,   Pos,    200,   10,  80,    0,    1,   .2,    0.0001,    4,   10,    -10,    ""}
+{Huber:, 3, "m$(N)", "asynMotor",  SMC1,  3, "X-table",   mm,   Pos,    200,   10,  80,    0,    1,   .2,    0.0001,    4,   10,    -10,    ""}
+{Huber:, 4, "m$(N)", "asynMotor",  SMC1,  4, "410-Rot",   deg,  Pos,    200,   10,  80,    0,    1,   .2,    0.0001,    4,   180,   -180,    ""}
+}
