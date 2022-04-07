@@ -1,7 +1,18 @@
-# RELEASE - Location of external support modules
+TEMPLATE_TOP=$(EPICS_BASE)/templates/makeBaseApp/top
 
-# Use motor/module's generated release file when buidling inside motor
--include $(TOP)/../RELEASE.$(EPICS_HOST_ARCH).local
-# Use motorHuber's RELEASE.local when building outside motor
+# this is nedeed for linking asyn statically on windows if asyn has vxi11 support
+ONCRPC=$(SUPPORT)/oncrpc/master
+
+ASYN=$(SUPPORT)/asyn/master
+MOTOR=$(SUPPORT)/motor/master
+HUBER=$(SUPPORT)/motorHuber/master
+
+# These allow developers to override the RELEASE variable settings
+# without having to modify the configure/RELEASE file itself.
+-include $(TOP)/../RELEASE.local
+-include $(TOP)/../configure/RELEASE.local
+-include $(TOP)/RELEASE.local
 -include $(TOP)/configure/RELEASE.local
 
+include $(TOP)/../../../ISIS_CONFIG
+-include $(TOP)/../../../ISIS_CONFIG.$(EPICS_HOST_ARCH)
