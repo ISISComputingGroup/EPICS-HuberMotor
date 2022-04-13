@@ -5,7 +5,7 @@ from lewis.core.statemachine import State
 
 from collections import OrderedDict
 
-from Huber.states import MovingState
+from .states import MovingState
 
 
 class SimulatedHuber(StateMachineDevice):
