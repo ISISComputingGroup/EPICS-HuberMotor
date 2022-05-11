@@ -7,16 +7,23 @@ from collections import OrderedDict
 
 from .states import MovingState
 
+from sys import maxsize
+
 
 class SimulatedHuber(StateMachineDevice):
     def _initialize_data(self):
+        """
+        Initialize all of the device's attributes.
+        """
         self.position = 0.0
-        self.target = 0.0
+        self._target = 0.0
         self.initial_speed = 2.0
         self.current_speed = 0
         self.high_speed = 5
         self.number_axis = 3
         self.acceleration = 1
+        self.positive_limit = maxsize
+        self.negative_limit = -maxsize
         self.positive_limit_tripped = False
         self.negative_limit_tripped = False
         self.program_execution = False
@@ -32,23 +39,20 @@ class SimulatedHuber(StateMachineDevice):
 
     def _get_transition_handlers(self):
         return OrderedDict([
-            (('idle', 'moving'), lambda: self.position != self.target),
-            (('moving', 'idle'), lambda: self.position == self.target)])
+            (('idle', 'moving'), lambda: self.position != self._target),
+            (('moving', 'idle'), lambda: self.position == self._target)])
 
-    @property
     def state(self):
         return self._csm.state
 
-    @property
     def target(self):
-        return self.target
+        return self._target
 
-    @target.setter
-    def target(self, new_target):
-        self.target = new_target
+    def set_target(self, new_target):
+        self._target = new_target
 
     def stop(self):
-        self.target = self.position
+        self._target = self.position
 
         self.log.info('Stopping movement after user request.')
 
