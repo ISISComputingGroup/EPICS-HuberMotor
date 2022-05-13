@@ -25,6 +25,8 @@ March 1, 2020
 
 #define NINT(f) (int)((f)>0 ? (f)+0.5 : (f)-0.5)
 
+static void huberHomingThreadC(void *pPvt);
+
 /** Creates a new SMC9300Controller object.
   * \param[in] portName          The name of the asyn port that will be created for this driver
   * \param[in] SMC9300PortName     The name of the drvAsynSerialPort that was created previously to connect to the SMC9300 controller 
@@ -198,16 +200,65 @@ asynStatus SMC9300Axis::move(double position, int relative, double minVelocity, 
 asynStatus SMC9300Axis::home(double minVelocity, double maxVelocity, double acceleration, int forwards)
 {
   asynStatus status;
-  // static const char *functionName = "SMC9300Axis::home";
-
-  // status = sendAccelAndVelocity(acceleration, maxVelocity);
-
-  if (forwards) {
-    sprintf(pC_->outString_, "home%d:hs", axisNo_);
-  } else {
-    sprintf(pC_->outString_, "home%d:hs", axisNo_);
+  if(forwards ==1){
+    this->forward = true;
+  }else{
+    this->forward = false;
   }
+  epicsThreadCreate("HuberHoming",
+                    epicsThreadPriorityLow,
+                    epicsThreadGetStackSize(epicsThreadStackMedium),
+                    (EPICSTHREADFUNC)huberHomingThreadC, (void *)this);
+  sprintf(pC_->outString_, "?s%d", axisNo_);
   status = pC_->writeController();
+  return status;
+}
+
+static void huberHomingThreadC(void *pPvt){
+  SMC9300Axis *axis = (SMC9300Axis*)pPvt;
+  axis->homing();
+}
+
+asynStatus SMC9300Axis::homing()
+{
+  asynStatus status;
+  char limitDirection, referenceDirection;
+  float homePos = 0.0;
+  asynStatus lockStatus;
+  int highLimit = 0, lowLimit = 0, atRest = 0;
+  if(this->forward){
+    limitDirection='+';
+    referenceDirection='-';
+  }else{
+    limitDirection='-';
+    referenceDirection='+';
+  }
+
+  
+  lockStatus = pC_->lock();
+  sprintf(pC_->outString_, "fast%d%c", axisNo_, limitDirection);
+  status = pC_->writeController();
+  while(highLimit == 0 && lowLimit == 0){
+    pC_->getIntegerParam(axisNo_, pC_->motorStatusHighLimit_, &highLimit);
+    pC_->getIntegerParam(axisNo_, pC_->motorStatusLowLimit_, &lowLimit);    
+    lockStatus = pC_->unlock();
+    epicsThreadSleep(1);
+    lockStatus = pC_->lock();
+  }
+  sprintf(pC_->outString_, "eref%d%c", axisNo_, referenceDirection);
+  status = pC_->writeController();
+  do{
+    
+    pC_->unlock();
+    epicsThreadSleep(1);
+    pC_->lock();
+    pC_->getIntegerParam(axisNo_, pC_->motorStatusDone_, &atRest);
+  } while (atRest == 0);
+  
+  sprintf(pC_->outString_, "pos%d:%f", axisNo_, homePos);
+  status = pC_->writeController();
+  pC_->unlock();
+  printf("Completed Home.\n");
   return status;
 }
 

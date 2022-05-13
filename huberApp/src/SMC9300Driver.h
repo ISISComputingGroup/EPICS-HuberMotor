@@ -28,11 +28,14 @@ public:
   asynStatus poll(bool *moving);
   asynStatus setPosition(double position);
   asynStatus setClosedLoop(bool closedLoop);
+  asynStatus homing();
 
 private:
   SMC9300Controller *pC_;          /**< Pointer to the asynMotorController to which this axis belongs.
                                    *   Abbreviated because it is used very frequently */
   asynStatus sendAccelAndVelocity(double accel, double velocity);
+  bool forward;
+  
   
 friend class SMC9300Controller;
 };
