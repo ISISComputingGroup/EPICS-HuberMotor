@@ -19,12 +19,12 @@ class SimulatedHuber(StateMachineDevice):
         self._target = 0.0
         self.initial_speed = 2.0
         self.current_speed = 0
-        self.high_speed = 20
+        self.high_speed = 10000
         self.high_speed_move = False
         self.number_axis = 3
-        self.acceleration = 0.1
-        self.positive_limit = maxsize
-        self.negative_limit = -maxsize
+        self.acceleration = 0.01
+        self.positive_limit = 100000
+        self.negative_limit = -100000
         self.positive_limit_tripped = False
         self.negative_limit_tripped = False
         self.program_execution = False
@@ -54,6 +54,7 @@ class SimulatedHuber(StateMachineDevice):
         return self._target
 
     def set_target(self, new_target):
+        self.log.error(f"setting target to {new_target}, fast move is {self.high_speed_move}")
         self._target = new_target
 
     def stop(self):

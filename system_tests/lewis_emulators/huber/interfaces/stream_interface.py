@@ -56,7 +56,7 @@ class HuberStreamInterface(StreamInterface):
         :param axis: The Axis to move
         :param direction: The direction to move int
         """
-        self.device.move_high_speed = True
+        self.device.high_speed_move = True
         if direction == "+":
             self.device.set_target(self.device.positive_limit)
         else:
@@ -76,8 +76,8 @@ class HuberStreamInterface(StreamInterface):
         :param axis: The axis to move.
         :param distance: The distance to move from the current point.
         """
-        self.device.move_high_speed = False
-        self.device.set_target(self.device.position() + distance)
+        self.device.high_speed_move = False
+        self.device.set_target(self.device.position + distance)
 
     def goto(self, axis, new_position):
         """
@@ -85,7 +85,7 @@ class HuberStreamInterface(StreamInterface):
         :param axis: The axis to move.
         :param new_position: The position to move to.
         """
-        self.device.move_high_speed = False
+        self.device.high_speed_move = False
         self.device.set_target(new_position)
 
     def stop(self, axis):
@@ -93,6 +93,7 @@ class HuberStreamInterface(StreamInterface):
 
         :param axis: The Axis to stop
         """
+        self.log.warning("STOP COMMAND RECEIVED")
         self.device.stop()
 
     def get_position(self, axis):
@@ -105,7 +106,7 @@ class HuberStreamInterface(StreamInterface):
         return f"{axis}:{self.device.position}"
 
     def goto_reference(self, axis, direction):
-        self.device.move_high_speed = True
+        self.device.high_speed_move = True
         self.device.set_target(0)
 
     def get_state(self, axis):
