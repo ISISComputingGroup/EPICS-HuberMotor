@@ -33,6 +33,7 @@ public:
 private:
   SMC9300Controller *pC_;          /**< Pointer to the asynMotorController to which this axis belongs.
                                    *   Abbreviated because it is used very frequently */
+  double previousPosition;            /** The position of the axis on its last poll, used to calculate direction. */
   asynStatus sendAccelAndVelocity(double accel, double velocity);
   bool forward;
   

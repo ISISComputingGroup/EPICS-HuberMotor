@@ -348,7 +348,12 @@ asynStatus SMC9300Axis::poll(bool *moving)
   // The response string is of the form "1:1.234"
   position = NINT(atof(&pC_->inString_[2]) *  STEPS_PER_EGU);
   setDoubleParam(pC_->motorEncoderPosition_, position);
-
+  if(this->previousPosition > position){
+    setIntegerParam(pC_->motorStatusDirection_, 0);
+  }else if(this->previousPosition < position){
+    setIntegerParam(pC_->motorStatusDirection_, 1);
+  }
+  this->previousPosition = position;
 
   // Read the moving status of this motor
   sprintf(pC_->outString_, "?s%d", axisNo_);
