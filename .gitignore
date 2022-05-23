@@ -19,3 +19,4 @@ auto_positions.sav*
 .idea/
 __pycache__/
 test-reports/
+.vs
