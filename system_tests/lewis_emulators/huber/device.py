@@ -1,13 +1,7 @@
 from lewis.devices import StateMachineDevice
-
 from lewis.core.statemachine import State
-
-
 from collections import OrderedDict
-
 from .states import MovingState, HighSpeedState
-
-from sys import maxsize
 
 
 class SimulatedHuber(StateMachineDevice):
@@ -40,8 +34,8 @@ class SimulatedHuber(StateMachineDevice):
 
     def _get_transition_handlers(self):
         return OrderedDict([
-            (('idle', 'moving'), lambda: self.position != self._target and self.high_speed_move is False),
-            (('idle', 'high_speed'), lambda: self.position != self._target and self.high_speed_move is True),
+            (('idle', 'moving'), lambda: self.position != self._target and not self.high_speed_move),
+            (('idle', 'high_speed'), lambda: self.position != self._target and self.high_speed_move),
             (('moving', 'idle'), lambda: self.position == self._target),
             (('high_speed', 'idle'), lambda: self.position == self._target)])
 
@@ -57,7 +51,6 @@ class SimulatedHuber(StateMachineDevice):
 
     def stop(self):
         self._target = self.position
-
         self.log.info('Stopping movement after user request.')
 
         return self.target, self.position

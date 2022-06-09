@@ -15,7 +15,8 @@ IOCS = [
         "directory": get_default_ioc_dir("HUBER"),
         "emulator": EMULATOR_NAME,
         "ioc_launcher_class": ProcServLauncher,
-        "pv_for_existence": f"{MTR1}.RBV",
+        "pv_for_existence": f"{MTR1}",
+        "custom_prefix": "MOT",
         "macros": {
             "MTRCTRL": "01",
             "AXIS1": "yes",
@@ -44,7 +45,7 @@ class HUBERTests(unittest.TestCase):
 
     def test_GIVEN_move_THEN_motor_moves_to_position_over_time(self):
         self.ca.set_pv_value(MTR1, 1000)
-        self.ca.assert_that_pv_is_not(f"{MTR1}.RBV", 1000)
+        self.ca.assert_that_pv_is_not_number(f"{MTR1}.RBV", 1000, 1)
         self.ca.assert_that_pv_is(f"{MTR1}.MOVN", 1)
         self.ca.assert_that_pv_is_number(f"{MTR1}.RBV", 1000, 1, timeout=30)
 
@@ -72,15 +73,15 @@ class HUBERTests(unittest.TestCase):
         home = 10
         self._lewis.backdoor_set_on_device("reference_point", home)
         self.ca.set_pv_value(f"{MTR1}.HOMF", 1)
-        self.ca.assert_that_pv_is(f"{MTR1}.RBV", 1000, timeout=30)
-        self.ca.assert_that_pv_is_not(f"{MTR1}.RBV", 1000, timeout=30)
-        self.ca.assert_that_pv_is(f"{MTR1}.RBV", 0, timeout=30)
+        self.ca.assert_that_pv_is_number(f"{MTR1}.RBV", 1000, 1, timeout=30)
+        self.ca.assert_that_pv_is_not_number(f"{MTR1}.RBV", 1000, 1, timeout=30)
+        self.ca.assert_that_pv_is_number(f"{MTR1}.RBV", 0, 1, timeout=30)
 
     def test_GIVEN_home_reverse_THEN_motor_moves_to_limit_at_fast_speed_THEN_motor_moves_to_eref_AND_sets_position(self):
         home = 10
         self._lewis.backdoor_set_on_device("reference_point", home)
         self.ca.set_pv_value(f"{MTR1}.HOMR", 1)
-        self.ca.assert_that_pv_is(f"{MTR1}.RBV", -1000, timeout=30)
-        self.ca.assert_that_pv_is_not(f"{MTR1}.RBV", -1000, timeout=30)
-        self.ca.assert_that_pv_is(f"{MTR1}.RBV", 0, timeout=30)
+        self.ca.assert_that_pv_is_number(f"{MTR1}.RBV", -1000, 1, timeout=30)
+        self.ca.assert_that_pv_is_not_number(f"{MTR1}.RBV", -1000, 1, timeout=30)
+        self.ca.assert_that_pv_is_number(f"{MTR1}.RBV", 0, 1, timeout=30)
 

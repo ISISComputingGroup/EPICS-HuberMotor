@@ -242,7 +242,7 @@ asynStatus SMC9300Axis::homing()
     pC_->getIntegerParam(axisNo_, pC_->motorStatusHighLimit_, &highLimit);
     pC_->getIntegerParam(axisNo_, pC_->motorStatusLowLimit_, &lowLimit);    
     lockStatus = pC_->unlock();
-    epicsThreadSleep(1);
+    epicsThreadSleep(0.1);
     lockStatus = pC_->lock();
   }
   sprintf(pC_->outString_, "eref%d%c", axisNo_, referenceDirection);
@@ -250,7 +250,7 @@ asynStatus SMC9300Axis::homing()
   do{
     
     pC_->unlock();
-    epicsThreadSleep(1);
+    epicsThreadSleep(0.1);
     pC_->lock();
     pC_->getIntegerParam(axisNo_, pC_->motorStatusDone_, &atRest);
   } while (atRest == 0);
@@ -258,7 +258,8 @@ asynStatus SMC9300Axis::homing()
   sprintf(pC_->outString_, "pos%d:%f", axisNo_, homePos);
   status = pC_->writeController();
   pC_->unlock();
-  printf("Completed Home.\n");
+  
+  asynPrint(pasynUser_, ASYN_TRACE_FLOW, "Axis %i Completed Home.\n", axisNo_);
   return status;
 }
 

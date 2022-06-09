@@ -43,4 +43,3 @@ class HighSpeedState(MovingState):
 
         self.log.info('Fast move position (%s -> %s), target=%s, speed=%s', old_position,
                       self._context.position, self._context.target(), self._context.current_speed)
-
