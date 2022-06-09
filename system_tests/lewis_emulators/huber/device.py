@@ -25,8 +25,6 @@ class SimulatedHuber(StateMachineDevice):
         self.acceleration = 0.01
         self.positive_limit = 100000
         self.negative_limit = -100000
-        self.positive_limit_tripped = False
-        self.negative_limit_tripped = False
         self.program_execution = False
         self.reference_point = 0
 
@@ -63,3 +61,9 @@ class SimulatedHuber(StateMachineDevice):
         self.log.info('Stopping movement after user request.')
 
         return self.target, self.position
+
+    def positive_limit_tripped(self):
+        return self.position >= self.positive_limit
+
+    def negative_limit_tripped(self):
+        return self.negative_limit >= self.position

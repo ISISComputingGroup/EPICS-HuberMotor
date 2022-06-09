@@ -19,10 +19,8 @@ class HuberStreamInterface(StreamInterface):
             CmdBuilder(self.get_position).escape("?e").int().eos().build(),  # query the current position of the encoder
             CmdBuilder(self.get_state).escape("?s").int().eos().build(),  # query the current operating state
             CmdBuilder(self.stop).escape("q").int().eos().build(),  # quit current positioning task.
-            CmdBuilder(self.goto_reference).escape("eref").int().char().eos().build(),
+            CmdBuilder(self.goto_reference).escape("eref").int().char().eos().build(), # search for the reference position
             CmdBuilder(self.set_position).escape("pos").int().escape(":").float().eos().build(),  # set the position
-            # search for the reference position
-
         }
     in_terminator = "\r"
     out_terminator = "\r\n"
@@ -68,7 +66,7 @@ class HuberStreamInterface(StreamInterface):
         :param axis: The Axis to set the acceleration on.
         :param accel: The acceleration to set.
         """
-        self.device.high_speed = accel
+        self.device.acceleration = accel
 
     def move(self, axis, distance):
         """
@@ -128,6 +126,6 @@ class HuberStreamInterface(StreamInterface):
             bit10: 1024 encoder reference (index) installed
         """
         bit_string = f"{1}{0}{0}{int(self.device.state() == 'idle')}{int(self.device.program_execution)}" \
-                     f"{0}{0}{int(self.device.positive_limit_tripped)}{int(self.device.negative_limit_tripped)}" \
+                     f"{0}{0}{int(self.device.positive_limit_tripped())}{int(self.device.negative_limit_tripped())}" \
                      f"{0}{int(self.device.state() == 'idle')}"
         return f"{axis}:{int(bit_string, 2)}"

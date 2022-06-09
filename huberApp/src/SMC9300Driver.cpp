@@ -223,7 +223,7 @@ asynStatus SMC9300Axis::homing()
 {
   asynStatus status;
   char limitDirection, referenceDirection;
-  float homePos = 0.0;
+  epicsFloat64 homePos = 0.0;
   asynStatus lockStatus;
   int highLimit = 0, lowLimit = 0, atRest = 0;
   if(this->forward){
