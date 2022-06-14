@@ -85,3 +85,24 @@ class HUBERTests(unittest.TestCase):
         self.ca.assert_that_pv_is_not_number(f"{MTR1}.RBV", -1000, 1, timeout=30)
         self.ca.assert_that_pv_is_number(f"{MTR1}.RBV", 0, 1, timeout=30)
 
+    def test_GIVEN_home_reverse_THEN_motor_moves_to_limit_at_fast_speed_THEN_stop_THEN_motor_STOPS(self):
+        home = 10
+        self._lewis.backdoor_set_on_device("reference_point", home)
+        self._lewis.backdoor_set_on_device("high_speed", 5)
+        self.ca.set_pv_value(f"{MTR1}.HOMR", 1)
+        self.ca.assert_that_pv_is_not_number(f"{MTR1}.RBV", 0, 1, timeout=30)
+        self.ca.set_pv_value(f"{MTR1}.STOP", 1)
+        self.ca.assert_that_pv_is(f"{MTR1}.DMOV", 1)
+        self.ca.assert_that_pv_is_not_number(f"{MTR1}.RBV", -1000, 1, timeout=30)
+
+    def test_GIVEN_home_reverse_THEN_motor_moves_to_limit_at_fast_speed_THEN_THEN_STOP(self):
+        home = 10
+        self._lewis.backdoor_set_on_device("reference_point", home)
+        self._lewis.backdoor_set_on_device("high_speed", 5)
+        self.ca.set_pv_value(f"{MTR1}.HOMR", 1)
+        self.ca.assert_that_pv_is_number(f"{MTR1}.RBV", -1000, 1, timeout=30)
+        self.ca.assert_that_pv_is_not_number(f"{MTR1}.RBV", -1000, 1, timeout=30)
+        self.ca.set_pv_value(f"{MTR1}.STOP", 1)
+        self.ca.assert_that_pv_is(f"{MTR1}.DMOV", 1)
+        self.ca.assert_that_pv_is_not_number(f"{MTR1}.RBV", 0, 1, timeout=30)
+

@@ -36,6 +36,7 @@ private:
   double previousPosition;            /** The position of the axis on its last poll, used to calculate direction. */
   asynStatus sendAccelAndVelocity(double accel, double velocity);
   bool forward;
+  bool stopStatus;
   
   
 friend class SMC9300Controller;

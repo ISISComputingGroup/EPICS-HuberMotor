@@ -180,7 +180,6 @@ asynStatus SMC9300Axis::sendAccelAndVelocity(double acceleration, double velocit
   return status;
 }
 
-
 asynStatus SMC9300Axis::move(double position, int relative, double minVelocity, double maxVelocity, double acceleration)
 {
   asynStatus status;
@@ -221,6 +220,7 @@ static void huberHomingThreadC(void *pPvt){
 
 asynStatus SMC9300Axis::homing()
 {
+  this->stopStatus = false;
   asynStatus status;
   char limitDirection, referenceDirection;
   epicsFloat64 homePos = 0.0;
@@ -242,23 +242,34 @@ asynStatus SMC9300Axis::homing()
     pC_->getIntegerParam(axisNo_, pC_->motorStatusHighLimit_, &highLimit);
     pC_->getIntegerParam(axisNo_, pC_->motorStatusLowLimit_, &lowLimit);    
     lockStatus = pC_->unlock();
+    if(this->stopStatus){
+      return status;
+    }
     epicsThreadSleep(0.1);
     lockStatus = pC_->lock();
   }
   sprintf(pC_->outString_, "eref%d%c", axisNo_, referenceDirection);
   status = pC_->writeController();
+  pC_->unlock();
+  // sleep needed to avoid race condition with polling.
+  epicsThreadSleep(1);
   do{
-    
-    pC_->unlock();
+    if(this->stopStatus){
+      return status;
+    }
     epicsThreadSleep(0.1);
     pC_->lock();
     pC_->getIntegerParam(axisNo_, pC_->motorStatusDone_, &atRest);
+    pC_->unlock();
+    
   } while (atRest == 0);
-  
+  if(this->stopStatus){
+      return status;
+    }
+  pC_->lock();
   sprintf(pC_->outString_, "pos%d:%f", axisNo_, homePos);
   status = pC_->writeController();
   pC_->unlock();
-  
   asynPrint(pasynUser_, ASYN_TRACE_FLOW, "Axis %i Completed Home.\n", axisNo_);
   return status;
 }
@@ -293,6 +304,8 @@ asynStatus SMC9300Axis::stop(double acceleration )
 
   sprintf(pC_->outString_, "q%d", axisNo_);
   status = pC_->writeController();
+  this->stopStatus = true; //use for breaking out of homing routine on stop call.
+  asynPrint(pasynUser_, ASYN_TRACE_ERROR, "set stopStatus to %s\n", this->stopStatus ? "true" : "false");
   return status;
 }
 
