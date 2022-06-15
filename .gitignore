@@ -16,3 +16,7 @@ auto_settings.sav*
 auto_positions.sav*
 .ccfxprepdir/
 *.local
+.idea/
+__pycache__/
+test-reports/
+.vs

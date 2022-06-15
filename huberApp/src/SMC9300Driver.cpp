@@ -25,6 +25,8 @@ March 1, 2020
 
 #define NINT(f) (int)((f)>0 ? (f)+0.5 : (f)-0.5)
 
+static void huberHomingThreadC(void *pPvt);
+
 /** Creates a new SMC9300Controller object.
   * \param[in] portName          The name of the asyn port that will be created for this driver
   * \param[in] SMC9300PortName     The name of the drvAsynSerialPort that was created previously to connect to the SMC9300 controller 
@@ -178,7 +180,6 @@ asynStatus SMC9300Axis::sendAccelAndVelocity(double acceleration, double velocit
   return status;
 }
 
-
 asynStatus SMC9300Axis::move(double position, int relative, double minVelocity, double maxVelocity, double acceleration)
 {
   asynStatus status;
@@ -198,16 +199,78 @@ asynStatus SMC9300Axis::move(double position, int relative, double minVelocity, 
 asynStatus SMC9300Axis::home(double minVelocity, double maxVelocity, double acceleration, int forwards)
 {
   asynStatus status;
-  // static const char *functionName = "SMC9300Axis::home";
-
-  // status = sendAccelAndVelocity(acceleration, maxVelocity);
-
-  if (forwards) {
-    sprintf(pC_->outString_, "home%d:hs", axisNo_);
-  } else {
-    sprintf(pC_->outString_, "home%d:hs", axisNo_);
+  if(forwards ==1){
+    this->forward = true;
+  }else{
+    this->forward = false;
   }
+  epicsThreadCreate("HuberHoming",
+                    epicsThreadPriorityLow,
+                    epicsThreadGetStackSize(epicsThreadStackMedium),
+                    (EPICSTHREADFUNC)huberHomingThreadC, (void *)this);
+  sprintf(pC_->outString_, "?s%d", axisNo_);
   status = pC_->writeController();
+  return status;
+}
+
+static void huberHomingThreadC(void *pPvt){
+  SMC9300Axis *axis = (SMC9300Axis*)pPvt;
+  axis->homing();
+}
+
+asynStatus SMC9300Axis::homing()
+{
+  this->stopStatus = false;
+  asynStatus status;
+  char limitDirection, referenceDirection;
+  epicsFloat64 homePos = 0.0;
+  asynStatus lockStatus;
+  int highLimit = 0, lowLimit = 0, atRest = 0;
+  if(this->forward){
+    limitDirection='+';
+    referenceDirection='-';
+  }else{
+    limitDirection='-';
+    referenceDirection='+';
+  }
+
+  
+  lockStatus = pC_->lock();
+  sprintf(pC_->outString_, "fast%d%c", axisNo_, limitDirection);
+  status = pC_->writeController();
+  while(highLimit == 0 && lowLimit == 0){
+    pC_->getIntegerParam(axisNo_, pC_->motorStatusHighLimit_, &highLimit);
+    pC_->getIntegerParam(axisNo_, pC_->motorStatusLowLimit_, &lowLimit);    
+    lockStatus = pC_->unlock();
+    if(this->stopStatus){
+      return status;
+    }
+    epicsThreadSleep(0.1);
+    lockStatus = pC_->lock();
+  }
+  sprintf(pC_->outString_, "eref%d%c", axisNo_, referenceDirection);
+  status = pC_->writeController();
+  pC_->unlock();
+  // sleep needed to avoid race condition with polling.
+  epicsThreadSleep(1);
+  do{
+    if(this->stopStatus){
+      return status;
+    }
+    epicsThreadSleep(0.1);
+    pC_->lock();
+    pC_->getIntegerParam(axisNo_, pC_->motorStatusDone_, &atRest);
+    pC_->unlock();
+    
+  } while (atRest == 0);
+  if(this->stopStatus){
+      return status;
+    }
+  pC_->lock();
+  sprintf(pC_->outString_, "pos%d:%f", axisNo_, homePos);
+  status = pC_->writeController();
+  pC_->unlock();
+  asynPrint(pasynUser_, ASYN_TRACE_FLOW, "Axis %i Completed Home.\n", axisNo_);
   return status;
 }
 
@@ -241,6 +304,8 @@ asynStatus SMC9300Axis::stop(double acceleration )
 
   sprintf(pC_->outString_, "q%d", axisNo_);
   status = pC_->writeController();
+  this->stopStatus = true; //use for breaking out of homing routine on stop call.
+  asynPrint(pasynUser_, ASYN_TRACE_ERROR, "set stopStatus to %s\n", this->stopStatus ? "true" : "false");
   return status;
 }
 
@@ -297,7 +362,12 @@ asynStatus SMC9300Axis::poll(bool *moving)
   // The response string is of the form "1:1.234"
   position = NINT(atof(&pC_->inString_[2]) *  STEPS_PER_EGU);
   setDoubleParam(pC_->motorEncoderPosition_, position);
-
+  if(this->previousPosition > position){
+    setIntegerParam(pC_->motorStatusDirection_, 0);
+  }else if(this->previousPosition < position){
+    setIntegerParam(pC_->motorStatusDirection_, 1);
+  }
+  this->previousPosition = position;
 
   // Read the moving status of this motor
   sprintf(pC_->outString_, "?s%d", axisNo_);
