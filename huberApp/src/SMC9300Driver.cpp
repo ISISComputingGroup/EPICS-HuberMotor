@@ -199,6 +199,7 @@ asynStatus SMC9300Axis::move(double position, int relative, double minVelocity, 
 asynStatus SMC9300Axis::home(double minVelocity, double maxVelocity, double acceleration, int forwards)
 {
   asynStatus status;
+  // set homing direction on axis so that it can be passed into thread.
   if(forwards ==1){
     this->forward = true;
   }else{
@@ -214,18 +215,22 @@ asynStatus SMC9300Axis::home(double minVelocity, double maxVelocity, double acce
 }
 
 static void huberHomingThreadC(void *pPvt){
+  //static function to handle homing in a different thread.
   SMC9300Axis *axis = (SMC9300Axis*)pPvt;
   axis->homing();
 }
 
 asynStatus SMC9300Axis::homing()
 {
+  // reset stop status
   this->stopStatus = false;
   asynStatus status;
   char limitDirection, referenceDirection;
+  // Always consider the hardware reference to be 0.
   epicsFloat64 homePos = 0.0;
   asynStatus lockStatus;
   int highLimit = 0, lowLimit = 0, atRest = 0;
+  // Set directions of travel
   if(this->forward){
     limitDirection='+';
     referenceDirection='-';
@@ -234,7 +239,7 @@ asynStatus SMC9300Axis::homing()
     referenceDirection='+';
   }
 
-  
+  // First go to a limit to ensure the reference point cannot be missed.
   lockStatus = pC_->lock();
   sprintf(pC_->outString_, "fast%d%c", axisNo_, limitDirection);
   status = pC_->writeController();
@@ -248,11 +253,13 @@ asynStatus SMC9300Axis::homing()
     epicsThreadSleep(0.1);
     lockStatus = pC_->lock();
   }
+  // Now search for the reference point, moving away from the limit.
   sprintf(pC_->outString_, "eref%d%c", axisNo_, referenceDirection);
   status = pC_->writeController();
   pC_->unlock();
   // sleep needed to avoid race condition with polling.
   epicsThreadSleep(1);
+  //Always loop at least once to allow the move to reference to start.
   do{
     if(this->stopStatus){
       return status;
@@ -261,15 +268,25 @@ asynStatus SMC9300Axis::homing()
     pC_->lock();
     pC_->getIntegerParam(axisNo_, pC_->motorStatusDone_, &atRest);
     pC_->unlock();
-    
+    // Due to the sleep + the initial loop, when atRest is 0 we must either be at the reference, 
+    // Or have reached the other limit.
   } while (atRest == 0);
+
   if(this->stopStatus){
       return status;
     }
   pC_->lock();
+
+  // Set the current position to be 0.
   sprintf(pC_->outString_, "pos%d:%f", axisNo_, homePos);
   status = pC_->writeController();
+
+  // reset the set point to also be 0.
+  pC_->setDoubleParam(axisNo_, pC_->motorMoveAbs_, homePos);
+  callParamCallbacks();
+
   pC_->unlock();
+
   asynPrint(pasynUser_, ASYN_TRACE_FLOW, "Axis %i Completed Home.\n", axisNo_);
   return status;
 }
