@@ -229,23 +229,27 @@ asynStatus SMC9300Axis::homing()
   // Always consider the hardware reference to be 0.
   epicsFloat64 homePos = 0.0;
   asynStatus lockStatus;
-  int highLimit = 0, lowLimit = 0, atRest = 0;
-  // Set directions of travel
+
+  int limit = 0, limitCheck = 0, atRest = 0;
+
+  // Set directions of travel and limit to check.
   if(this->forward){
     limitDirection='+';
     referenceDirection='-';
+    limitCheck = pC_->motorStatusHighLimit_;
+
   }else{
     limitDirection='-';
     referenceDirection='+';
+    limitCheck = pC_->motorStatusLowLimit_;
   }
 
   // First go to a limit to ensure the reference point cannot be missed.
   lockStatus = pC_->lock();
   sprintf(pC_->outString_, "fast%d%c", axisNo_, limitDirection);
   status = pC_->writeController();
-  while(highLimit == 0 && lowLimit == 0){
-    pC_->getIntegerParam(axisNo_, pC_->motorStatusHighLimit_, &highLimit);
-    pC_->getIntegerParam(axisNo_, pC_->motorStatusLowLimit_, &lowLimit);    
+  while(limit == 0){
+    pC_->getIntegerParam(axisNo_, limitCheck, &limit);
     lockStatus = pC_->unlock();
     if(this->stopStatus){
       return status;
