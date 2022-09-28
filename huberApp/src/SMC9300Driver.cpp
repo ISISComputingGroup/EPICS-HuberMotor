@@ -282,7 +282,7 @@ asynStatus SMC9300Axis::homing()
   pC_->lock();
 
   // Set the current position to be 0.
-  sprintf(pC_->outString_, "pos%d:%f", axisNo_, homePos);
+  sprintf(pC_->outString_, "pos%d:%f", axisNo_, homePos / STEPS_PER_EGU);
   status = pC_->writeController();
 
   // reset the set point to also be 0.

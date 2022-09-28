@@ -13,7 +13,7 @@ class SimulatedHuber(StateMachineDevice):
         self._target = 0.0
         self.initial_speed = 2.0
         self.current_speed = 0
-        self.high_speed = 10000
+        self.high_speed = 1000
         self.high_speed_move = False
         self.number_axis = 3
         self.acceleration = 0.01
