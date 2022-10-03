@@ -75,7 +75,6 @@ class HUBERTests(unittest.TestCase):
         self.ca.assert_that_pv_is_number(f"{MTR1}.RBV", 1000, 1, timeout=30)
         self.ca.assert_that_pv_is_not_number(f"{MTR1}.RBV", 1000, 1, timeout=30)
         self.ca.assert_that_pv_is_number(f"{MTR1}.RBV", 0, 1, timeout=30)
-        self.ca.assert_that_pv_is_number(f"{MTR1}.RBV", 0, 1, timeout=30)
         self.ca.assert_that_pv_is_number(f"{MTR1}.VAL", 0, 1, timeout=30)
 
     def test_GIVEN_home_reverse_THEN_motor_moves_to_limit_at_fast_speed_THEN_motor_moves_to_eref_AND_sets_position(self):
@@ -83,7 +82,6 @@ class HUBERTests(unittest.TestCase):
         self.ca.set_pv_value(f"{MTR1}.HOMR", 1)
         self.ca.assert_that_pv_is_number(f"{MTR1}.RBV", -1000, 1, timeout=30)
         self.ca.assert_that_pv_is_not_number(f"{MTR1}.RBV", -1000, 1, timeout=30)
-        self.ca.assert_that_pv_is_number(f"{MTR1}.RBV", 0, 1, timeout=30)
         self.ca.assert_that_pv_is_number(f"{MTR1}.RBV", 0, 1, timeout=30)
         self.ca.assert_that_pv_is_number(f"{MTR1}.VAL", 0, 1, timeout=30)
 
