@@ -105,7 +105,7 @@ class HuberStreamInterface(StreamInterface):
 
     def goto_reference(self, axis, direction):
         self.device.high_speed_move = True
-        self.device.set_target(0)
+        self.device.set_target(self.device.reference_point)
 
     def get_state(self, axis):
         """
