@@ -185,14 +185,14 @@ asynStatus SMC9300Axis::move(double position, int relative, double minVelocity, 
   asynStatus status;
   // static const char *functionName = "SMC9300Axis::move";
 
-  // status = sendAccelAndVelocity(acceleration, maxVelocity);
-
   if (relative) {
     sprintf(pC_->outString_, "move%d:%f", axisNo_, position / STEPS_PER_EGU);
   } else {
     sprintf(pC_->outString_, "goto%d:%f", axisNo_, position / STEPS_PER_EGU);
   }
   status = pC_->writeController();
+  double movingCheckDelay = 0.2;
+  epicsThreadSleep(movingCheckDelay);
   return status;
 }
 
@@ -399,7 +399,7 @@ asynStatus SMC9300Axis::poll(bool *moving)
   // The response string is of the form "1:131"
   done = atoi(&pC_->inString_[2])%2 ? 1:0;
   setIntegerParam(pC_->motorStatusDone_, done);
-  *moving = done ? false:true;
+  *moving = !done;
 
   // Read the limit status
   // sprintf(pC_->outString_, "?s%d", axisNo_);
