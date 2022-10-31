@@ -104,3 +104,6 @@ class HUBERTests(unittest.TestCase):
         self.ca.assert_that_pv_is(f"{MTR1}.DMOV", 1)
         self.ca.assert_that_pv_is_not_number(f"{MTR1}.RBV", 0, 1, timeout=30)
 
+    def test_GIVEN_setpoint_WHEN_monitoring_moving_THEN_moving_changes_once(self):
+        with self.ca.assert_that_pv_monitor_gets_values(f"{MTR1}.MOVN", [0,1,0]):
+            self.ca.set_pv_value(MTR1, 1)
