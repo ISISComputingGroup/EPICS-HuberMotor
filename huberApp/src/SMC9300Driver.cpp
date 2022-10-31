@@ -59,7 +59,7 @@ SMC9300Controller::SMC9300Controller(const char *portName, const char *SMC9300Po
     pAxis = new SMC9300Axis(this, axis);
   }
 
-  startPoller(movingPollPeriod, 0, 2);
+  startPoller(movingPollPeriod, idlePollPeriod, 2);
 }
 
 
@@ -184,37 +184,15 @@ asynStatus SMC9300Axis::move(double position, int relative, double minVelocity, 
 {
   asynStatus status;
   // static const char *functionName = "SMC9300Axis::move";
-  printf("move begin to %f", position / STEPS_PER_EGU);
 
   if (relative) {
     sprintf(pC_->outString_, "move%d:%f", axisNo_, position / STEPS_PER_EGU);
   } else {
     sprintf(pC_->outString_, "goto%d:%f", axisNo_, position / STEPS_PER_EGU);
   }
-
   status = pC_->writeController();
-
   double movingCheckDelay = 0.2;
-      epicsThreadSleep(movingCheckDelay);
-//  asynStatus comStatus;
-//  int _done;
-//  int movingCheckPolls = 10;
-////  //pC_->lock();
-//do {
-////
-//    // Read the moving status of this motor
-//    sprintf(pC_->outString_, "?s%d", axisNo_);
-//    do {
-//        comStatus = pC_->writeReadController();
-//    } while (atoi(&pC_->inString_[0]) != axisNo_);
-//    _done = atoi(&pC_->inString_[2]) % 2 ? 1 : 0;
-//
-//    printf("Got here, done is %d\n", _done);
-//    epicsThreadSleep(movingCheckDelay);
-//} while (_done == 1 && --movingCheckPolls > 0);
-
-//pC_->unlock();
-
+  epicsThreadSleep(movingCheckDelay);
   return status;
 }
 
@@ -420,12 +398,8 @@ asynStatus SMC9300Axis::poll(bool *moving)
   if (comStatus) goto skip;
   // The response string is of the form "1:131"
   done = atoi(&pC_->inString_[2])%2 ? 1:0;
-  printf("done in poll loop is %d\n", done);
-  //if (done) {
-   setIntegerParam(pC_->motorStatusDone_, done);
-  //}
-   //setIntegerParam(pC_->motorStatusMoving_, !done);
-  //*moving = done ? false:true;
+  setIntegerParam(pC_->motorStatusDone_, done);
+  *moving = !done;
 
   // Read the limit status
   // sprintf(pC_->outString_, "?s%d", axisNo_);
